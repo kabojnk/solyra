@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kevinmahoney/etrenank/internal/api/v1/handlers"
+	"github.com/kevinmahoney/etrenank/internal/api/v1/middleware"
 	"github.com/kevinmahoney/etrenank/internal/db"
 	"github.com/kevinmahoney/etrenank/internal/services/cache"
 	"github.com/kevinmahoney/etrenank/internal/services/weather"
@@ -30,16 +31,15 @@ func (a *API) RegisterRoutes(router *gin.RouterGroup) {
 	sunsetHandler := handlers.NewSunsetHandler(a.db, a.redisClient, a.weatherClient)
 
 	// Create middleware
-	//authMiddleware := middleware.NewAuthMiddleware(a.db)
+	authMiddleware := middleware.NewAuthMiddleware(a.db)
 
 	// Public routes
 	router.GET("/health", handlers.HealthCheck)
-	router.GET("/sunset_quality/:zipcode", sunsetHandler.GetSunsetQuality)
 
 	// Protected routes
-	//protected := router.Group("/")
-	//protected.Use(authMiddleware.Authenticate())
-	//{
-	//	protected.GET("/sunset_quality/:zipcode", sunsetHandler.GetSunsetQuality)
-	//}
+	protected := router.Group("/")
+	protected.Use(authMiddleware.Authenticate())
+	{
+		protected.GET("/sunset_quality/:zipcode", sunsetHandler.GetSunsetQuality)
+	}
 }
