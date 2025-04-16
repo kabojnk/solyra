@@ -54,22 +54,16 @@ func CalculateSunriseQuality(weather models.WeatherData, astronomy models.Astron
 	visibilityScore := math.Min(15, visibility*1.5)
 	factors["visibility_score"] = visibilityScore
 
-	// Air quality factor (lower AQI = better)
-	aqiScore := math.Max(0, 10-(aqi/10))
-	factors["air_quality_score"] = aqiScore
-
-	// === RAYLEIGH SCATTERING POTENTIAL ===
-	sunAltitude := astronomy.SunAltitude
-
-	// Sun angle factor (best when sun is just below horizon)
-	var sunAngleScore float64
-	if sunAltitude >= -6 && sunAltitude <= 6 {
-		// Optimal angles near horizon
-		sunAngleScore = 15 - math.Abs(sunAltitude)*2
-	} else {
-		sunAngleScore = math.Max(0, 3-math.Abs(sunAltitude-6)*0.5)
+	// Air quality factor (moderate pollution can enhance colors)
+	var aqiScore float64
+	if aqi >= 50 && aqi <= 100 {
+		aqiScore = 10 // Peak score for moderate AQI
+	} else if aqi < 50 {
+		aqiScore = aqi * 0.2 // Gradually increase score up to 50
+	} else { // > 100
+		aqiScore = math.Max(0, 10-(aqi-100)*0.1) // Decrease score for high pollution
 	}
-	factors["sun_angle_score"] = sunAngleScore
+	factors["air_quality_score"] = aqiScore
 
 	// === WEATHER CONDITIONS ===
 	recentRain := weather.PrecipitationLast24h
@@ -102,7 +96,6 @@ func CalculateSunriseQuality(weather models.WeatherData, astronomy models.Astron
 		humidityScore +
 		visibilityScore +
 		aqiScore +
-		sunAngleScore +
 		rainScore +
 		windScore
 
