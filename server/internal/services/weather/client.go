@@ -91,7 +91,7 @@ func NewClient(apiKey string) *Client {
 
 // GetWeatherByZipCode fetches weather data for a specific zip code
 func (c *Client) GetWeatherByZipCode(zipCode string) (*models.WeatherData, *models.AstronomyData, error) {
-	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&aqi=yes&alerts=no&days=1", c.baseURL, c.apiKey, zipCode)
+	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&aqi=yes&alerts=no&days=1&astronomy=yes", c.baseURL, c.apiKey, zipCode)
 	
 	resp, err := c.httpClient.Get(url)
 	if err != nil {

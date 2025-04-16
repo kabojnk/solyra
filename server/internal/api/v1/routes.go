@@ -7,6 +7,7 @@ import (
 	"github.com/kevinmahoney/etrenank/internal/db"
 	"github.com/kevinmahoney/etrenank/internal/services/cache"
 	"github.com/kevinmahoney/etrenank/internal/services/weather"
+	"github.com/kevinmahoney/etrenank/internal/config"
 )
 
 // API represents the v1 API
@@ -14,21 +15,23 @@ type API struct {
 	db            *db.PostgresDB
 	redisClient   *cache.RedisClient
 	weatherClient *weather.Client
+	config        *config.Config
 }
 
 // NewAPI creates a new v1 API
-func NewAPI(db *db.PostgresDB, redisClient *cache.RedisClient, weatherClient *weather.Client) *API {
+func NewAPI(db *db.PostgresDB, redisClient *cache.RedisClient, weatherClient *weather.Client, config *config.Config) *API {
 	return &API{
 		db:            db,
 		redisClient:   redisClient,
 		weatherClient: weatherClient,
+		config:        config,
 	}
 }
 
 // RegisterRoutes registers the v1 API routes
 func (a *API) RegisterRoutes(router *gin.RouterGroup) {
 	// Create handlers
-	sunsetHandler := handlers.NewSunsetHandler(a.db, a.redisClient, a.weatherClient)
+	sunsetHandler := handlers.NewSunsetHandler(a.db, a.redisClient, a.weatherClient, a.config)
 
 	// Create middleware
 	authMiddleware := middleware.NewAuthMiddleware(a.db)

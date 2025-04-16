@@ -17,6 +17,7 @@ type Config struct {
 // ServerConfig holds the server configuration
 type ServerConfig struct {
 	Address string
+	Debug   bool
 }
 
 // DatabaseConfig holds the database configuration
@@ -55,6 +56,7 @@ func Load() (*Config, error) {
 	return &Config{
 		Server: ServerConfig{
 			Address: getEnv("SERVER_ADDRESS", ":8080"),
+			Debug:   getEnv("SERVER_DEBUG", "false") == "true",
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("POSTGRES_HOST", "localhost"),
