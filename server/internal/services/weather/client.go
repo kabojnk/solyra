@@ -3,6 +3,7 @@ package weather
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -24,6 +25,7 @@ type WeatherAPIResponse struct {
 		Country        string  `json:"country"`
 		Lat            float64 `json:"lat"`
 		Lon            float64 `json:"lon"`
+		TzID           string  `json:"tz_id"`
 		LocaltimeEpoch int64   `json:"localtime_epoch"`
 		Localtime      string  `json:"localtime"`
 	} `json:"location"`
@@ -35,7 +37,6 @@ type WeatherAPIResponse struct {
 		IsDay            int     `json:"is_day"`
 		Condition        struct {
 			Text string `json:"text"`
-			Icon string `json:"icon"`
 			Code int    `json:"code"`
 		} `json:"condition"`
 		WindMph    float64 `json:"wind_mph"`
@@ -52,30 +53,34 @@ type WeatherAPIResponse struct {
 		FeelslikeF float64 `json:"feelslike_f"`
 		VisKm      float64 `json:"vis_km"`
 		VisMiles   float64 `json:"vis_miles"`
-		UV         float64 `json:"uv"`
+		Uv         float64 `json:"uv"`
 		GustMph    float64 `json:"gust_mph"`
 		GustKph    float64 `json:"gust_kph"`
 		AirQuality struct {
-			CO             float64 `json:"co"`
-			NO2            float64 `json:"no2"`
-			O3             float64 `json:"o3"`
-			SO2            float64 `json:"so2"`
-			PM25           float64 `json:"pm2_5"`
-			PM10           float64 `json:"pm10"`
-			USEPAIndex     int     `json:"us-epa-index"`
-			GBDEFRAIndex   int     `json:"gb-defra-index"`
+			CO           float64 `json:"co"`
+			NO2          float64 `json:"no2"`
+			O3           float64 `json:"o3"`
+			SO2          float64 `json:"so2"`
+			PM25         float64 `json:"pm2_5"`
+			PM10         float64 `json:"pm10"`
+			USEPAIndex   int     `json:"us-epa-index"`
+			GBDEFRAIndex int     `json:"gb-defra-index"`
 		} `json:"air_quality,omitempty"`
 	} `json:"current"`
-	Astronomy struct {
-		Astro struct {
-			Sunrise          string `json:"sunrise"`
-			Sunset           string `json:"sunset"`
-			Moonrise         string `json:"moonrise"`
-			Moonset          string `json:"moonset"`
-			MoonPhase        string `json:"moon_phase"`
-			MoonIllumination string `json:"moon_illumination"`
-		} `json:"astro"`
-	} `json:"astronomy"`
+	Forecast struct {
+		Forecastday []struct {
+			Date      string `json:"date"`
+			DateEpoch int64  `json:"date_epoch"`
+			Astro     struct {
+				Sunrise          string `json:"sunrise"`
+				Sunset           string `json:"sunset"`
+				Moonrise         string `json:"moonrise"`
+				Moonset          string `json:"moonset"`
+				MoonPhase        string `json:"moon_phase"`
+				MoonIllumination int8   `json:"moon_illumination"`
+			} `json:"astro"`
+		} `json:"forecastday"`
+	} `json:"forecast"`
 }
 
 // NewClient creates a new weather API client
@@ -92,66 +97,72 @@ func NewClient(apiKey string) *Client {
 // GetWeatherByZipCode fetches weather data for a specific zip code
 func (c *Client) GetWeatherByZipCode(zipCode string) (*models.WeatherData, *models.AstronomyData, error) {
 	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&aqi=yes&alerts=no&days=1&astronomy=yes", c.baseURL, c.apiKey, zipCode)
-	
+
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, fmt.Errorf("weather API returned status code %d", resp.StatusCode)
 	}
-	
+
 	var apiResp WeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to decode weather API response: %v", err)
 	}
-	
-	// Extract weather data
+
+	// Load location's timezone
+	loc, err := time.LoadLocation(apiResp.Location.TzID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load timezone %s: %v", apiResp.Location.TzID, err)
+	}
+
+	// Convert times to UTC ISO format
+	sunriseTime := c.convertToUTC(apiResp.Forecast.Forecastday[0].Astro.Sunrise, loc)
+	sunsetTime := c.convertToUTC(apiResp.Forecast.Forecastday[0].Astro.Sunset, loc)
+
 	weatherData := &models.WeatherData{
 		CloudCoverPercentage: float64(apiResp.Current.Cloud),
 		Humidity:             float64(apiResp.Current.Humidity),
 		VisibilityKm:         apiResp.Current.VisKm,
+		AirQualityIndex:      float64(apiResp.Current.AirQuality.USEPAIndex),
+		PrecipitationLast24h: apiResp.Current.PrecipMm,
 		WindSpeed:            apiResp.Current.WindMph,
-		Temperature:          apiResp.Current.TempC,
+		Temperature:          apiResp.Current.TempF,
 		Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
 	}
-	
-	// Add AQI if available
-	if apiResp.Current.AirQuality.USEPAIndex > 0 {
-		weatherData.AirQualityIndex = float64(apiResp.Current.AirQuality.USEPAIndex)
-	}
-	
-	// Get precipitation for last 24h (this is an approximation from current data)
-	weatherData.PrecipitationLast24h = apiResp.Current.PrecipMm
-	
-	// Extract astronomy data
-	// We need to calculate sun altitude based on time of day and location
-	// This is a simplified calculation - in a real app, you'd use a proper astronomical library
-	
-	// For now, we'll use a placeholder value based on whether it's day or night
-	var sunAltitude float64
-	if apiResp.Current.IsDay == 1 {
-		// During day, assume sun is somewhere between 0 and 45 degrees
-		sunAltitude = 25.0
-	} else {
-		// During night, assume sun is below horizon
-		sunAltitude = -15.0
-	}
-	
+
 	// Parse moon illumination as float
-	moonIllumination := 0.0
-	fmt.Sscanf(apiResp.Astronomy.Astro.MoonIllumination, "%f", &moonIllumination)
-	
+	moonIllumination := int8(0)
+	moonIllumination = apiResp.Forecast.Forecastday[0].Astro.MoonIllumination
+
 	astronomyData := &models.AstronomyData{
-		SunAltitude:       sunAltitude,
-		SunAzimuth:        float64(apiResp.Current.WindDegree), // Using wind direction as a placeholder
-		SunriseTime:       apiResp.Astronomy.Astro.Sunrise,
-		SunsetTime:        apiResp.Astronomy.Astro.Sunset,
-		MoonPhase:         apiResp.Astronomy.Astro.MoonPhase,
-		MoonIllumination:  moonIllumination,
+		SunAltitude:      -15.0, // Default value since it's not provided by the API
+		SunAzimuth:       float64(apiResp.Current.WindDegree),
+		SunriseTime:      sunriseTime,
+		SunsetTime:       sunsetTime,
+		MoonPhase:        apiResp.Forecast.Forecastday[0].Astro.MoonPhase,
+		MoonIllumination: moonIllumination,
 	}
-	
+
 	return weatherData, astronomyData, nil
+}
+
+// convertToUTC converts a time string in local time (e.g., "07:30 PM") to UTC ISO format
+func (c *Client) convertToUTC(timeStr string, loc *time.Location) string {
+	// Parse the time string (e.g., "07:30 PM")
+	t, err := time.ParseInLocation("03:04 PM", timeStr, loc)
+	if err != nil {
+		log.Printf("Error parsing time %s: %v", timeStr, err)
+		return timeStr // Return original string if parsing fails
+	}
+
+	// Get today's date in the location's timezone
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, loc)
+
+	// Convert to UTC and format as ISO
+	return today.UTC().Format(time.RFC3339)
 }
