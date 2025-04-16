@@ -98,13 +98,13 @@ func CalculateSunriseQuality(weather models.WeatherData, astronomy models.Astron
 	factors["wind_score"] = windScore
 
 	// === CALCULATE FINAL SCORE ===
-	qualityScore += (cloudScore +
+	qualityScore += cloudScore +
 		humidityScore +
 		visibilityScore +
 		aqiScore +
 		sunAngleScore +
 		rainScore +
-		windScore)
+		windScore
 
 	// Clamp final score between 0-100
 	qualityScore = math.Max(0, math.Min(100, qualityScore))
