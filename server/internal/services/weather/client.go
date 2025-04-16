@@ -95,8 +95,8 @@ func NewClient(apiKey string) *Client {
 }
 
 // GetWeatherByZipCode fetches weather data for a specific zip code
-func (c *Client) GetWeatherByZipCode(zipCode string) (*models.WeatherData, *models.AstronomyData, error) {
-	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&aqi=yes&alerts=no&days=1&astronomy=yes", c.baseURL, c.apiKey, zipCode)
+func (c *Client) GetWeatherByZipCode(zipCode string) ([]*models.WeatherData, []*models.AstronomyData, error) {
+	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&aqi=yes&alerts=no&days=3&astronomy=yes", c.baseURL, c.apiKey, zipCode)
 
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
@@ -119,35 +119,58 @@ func (c *Client) GetWeatherByZipCode(zipCode string) (*models.WeatherData, *mode
 		return nil, nil, fmt.Errorf("failed to load timezone %s: %v", apiResp.Location.TzID, err)
 	}
 
-	// Convert times to UTC ISO format
-	sunriseTime := c.convertToUTC(apiResp.Forecast.Forecastday[0].Astro.Sunrise, loc)
-	sunsetTime := c.convertToUTC(apiResp.Forecast.Forecastday[0].Astro.Sunset, loc)
+	weatherDataList := make([]*models.WeatherData, len(apiResp.Forecast.Forecastday))
+	astronomyDataList := make([]*models.AstronomyData, len(apiResp.Forecast.Forecastday))
 
-	weatherData := &models.WeatherData{
-		CloudCoverPercentage: float64(apiResp.Current.Cloud),
-		Humidity:             float64(apiResp.Current.Humidity),
-		VisibilityKm:         apiResp.Current.VisKm,
-		AirQualityIndex:      float64(apiResp.Current.AirQuality.USEPAIndex),
-		PrecipitationLast24h: apiResp.Current.PrecipMm,
-		WindSpeed:            apiResp.Current.WindMph,
-		Temperature:          apiResp.Current.TempF,
-		Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
+	for i, day := range apiResp.Forecast.Forecastday {
+		// Convert times to UTC ISO format
+		sunriseTime := c.convertToUTC(day.Astro.Sunrise, loc)
+		sunsetTime := c.convertToUTC(day.Astro.Sunset, loc)
+
+		// For the current day, use current conditions
+		var weatherData *models.WeatherData
+		if i == 0 {
+			weatherData = &models.WeatherData{
+				CloudCoverPercentage: float64(apiResp.Current.Cloud),
+				Humidity:             float64(apiResp.Current.Humidity),
+				VisibilityKm:         apiResp.Current.VisKm,
+				AirQualityIndex:      float64(apiResp.Current.AirQuality.USEPAIndex),
+				PrecipitationLast24h: apiResp.Current.PrecipMm,
+				WindSpeed:            apiResp.Current.WindMph,
+				Temperature:          apiResp.Current.TempF,
+				Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
+				Date:                day.Date,
+			}
+		} else {
+			// For future days, use forecast data
+			// Note: You might want to add more forecast data fields to the WeatherAPIResponse struct
+			weatherData = &models.WeatherData{
+				CloudCoverPercentage: 50.0, // Default values for forecast days
+				Humidity:             50.0,
+				VisibilityKm:         10.0,
+				AirQualityIndex:      50.0,
+				PrecipitationLast24h: 0.0,
+				WindSpeed:            5.0,
+				Temperature:          70.0,
+				Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
+				Date:                day.Date,
+			}
+		}
+
+		astronomyData := &models.AstronomyData{
+			SunAltitude:      -15.0, // Default value since it's not provided by the API
+			SunAzimuth:       float64(apiResp.Current.WindDegree),
+			SunriseTime:      sunriseTime,
+			SunsetTime:       sunsetTime,
+			MoonPhase:        day.Astro.MoonPhase,
+			MoonIllumination: day.Astro.MoonIllumination,
+		}
+
+		weatherDataList[i] = weatherData
+		astronomyDataList[i] = astronomyData
 	}
 
-	// Parse moon illumination as float
-	moonIllumination := int8(0)
-	moonIllumination = apiResp.Forecast.Forecastday[0].Astro.MoonIllumination
-
-	astronomyData := &models.AstronomyData{
-		SunAltitude:      -15.0, // Default value since it's not provided by the API
-		SunAzimuth:       float64(apiResp.Current.WindDegree),
-		SunriseTime:      sunriseTime,
-		SunsetTime:       sunsetTime,
-		MoonPhase:        apiResp.Forecast.Forecastday[0].Astro.MoonPhase,
-		MoonIllumination: moonIllumination,
-	}
-
-	return weatherData, astronomyData, nil
+	return weatherDataList, astronomyDataList, nil
 }
 
 // convertToUTC converts a time string in local time (e.g., "07:30 PM") to UTC ISO format

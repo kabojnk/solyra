@@ -1,17 +1,5 @@
 package models
 
-// SunsetQuality represents the quality of a sunset for photography
-type SunsetQuality struct {
-	ZipCode        string             `json:"zip_code"`
-	OverallQuality float64            `json:"overall_quality"`
-	Factors        map[string]float64 `json:"factors"`
-	Interpretation string             `json:"interpretation"`
-	WeatherData    WeatherData        `json:"weather_data"`
-	AstronomyData  AstronomyData      `json:"astronomy_data"`
-	LastUpdated    string             `json:"last_updated"`
-	ExpiresAt      string             `json:"expires_at"`
-}
-
 // WeatherData contains meteorological information from weather APIs
 type WeatherData struct {
 	CloudCoverPercentage float64 `json:"cloud_cover_percentage"`
@@ -22,6 +10,7 @@ type WeatherData struct {
 	WindSpeed            float64 `json:"wind_speed"`
 	Temperature          float64 `json:"temperature"`
 	Location             string  `json:"location"`
+	Date                 string  `json:"date"`
 }
 
 // AstronomyData contains sun/moon position information
@@ -32,4 +21,23 @@ type AstronomyData struct {
 	SunsetTime       string  `json:"sunset_time"`
 	MoonPhase        string  `json:"moon_phase"`
 	MoonIllumination int8    `json:"moon_illumination"`
+}
+
+// DayForecast represents a forecast for a specific day
+type DayForecast struct {
+	Date           string       `json:"date"`
+	WeatherData    WeatherData  `json:"weather_data"`
+	AstronomyData  AstronomyData `json:"astronomy_data"`
+	OverallQuality float64      `json:"overall_quality"`
+	Factors        map[string]float64 `json:"factors"`
+	Interpretation string       `json:"interpretation"`
+}
+
+// SunsetQuality represents the quality of a sunset for photography
+type SunsetQuality struct {
+	ZipCode      string        `json:"zip_code"`
+	Location     string        `json:"location"`
+	Forecasts    []DayForecast `json:"forecasts"`
+	LastUpdated  string        `json:"last_updated"`
+	ExpiresAt    string        `json:"expires_at"`
 }

@@ -70,30 +70,39 @@ func (h *SunsetHandler) GetSunsetQuality(c *gin.Context) {
 
 	// Get weather data from API
 	log.Printf("[INFO] Fetching fresh weather data from API for zipcode: %s", zipCode)
-	weatherData, astronomyData, err := h.weatherClient.GetWeatherByZipCode(zipCode)
+	weatherDataList, astronomyDataList, err := h.weatherClient.GetWeatherByZipCode(zipCode)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to fetch weather data: %v", err),
+			"error": fmt.Sprintf("Failed to get weather data: %v", err),
 		})
 		return
 	}
 
-	// Calculate sunset quality
-	overallQuality, factors, interpretation := photoquality.CalculateSunriseQuality(*weatherData, *astronomyData)
-
-	// Create response
+	// Create response with forecasts for each day
 	now := time.Now()
 	expiresAt := now.Add(1 * time.Hour)
 
+	forecasts := make([]models.DayForecast, len(weatherDataList))
+	for i := range weatherDataList {
+		// Calculate quality score for each day
+		overallQuality, factors, interpretation := photoquality.CalculateSunriseQuality(*weatherDataList[i], *astronomyDataList[i])
+		
+		forecasts[i] = models.DayForecast{
+			Date:           weatherDataList[i].Date,
+			WeatherData:    *weatherDataList[i],
+			AstronomyData:  *astronomyDataList[i],
+			OverallQuality: overallQuality,
+			Factors:        factors,
+			Interpretation: interpretation,
+		}
+	}
+
 	sunsetQuality := models.SunsetQuality{
-		ZipCode:        zipCode,
-		OverallQuality: overallQuality,
-		Factors:        factors,
-		Interpretation: interpretation,
-		WeatherData:    *weatherData,
-		AstronomyData:  *astronomyData,
-		LastUpdated:    now.Format(time.RFC3339),
-		ExpiresAt:      expiresAt.Format(time.RFC3339),
+		ZipCode:     zipCode,
+		Location:    weatherDataList[0].Location,
+		Forecasts:   forecasts,
+		LastUpdated: now.Format(time.RFC3339),
+		ExpiresAt:   expiresAt.Format(time.RFC3339),
 	}
 
 	// Cache the result with 1 hour TTL
