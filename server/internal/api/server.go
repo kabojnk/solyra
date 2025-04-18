@@ -53,7 +53,7 @@ func (s *Server) setupRoutes() {
 	})
 	
 	// API v1 routes
-	v1API := v1.NewAPI(s.db, s.redisClient, s.weatherClient)
+	v1API := v1.NewAPI(s.db, s.redisClient, s.weatherClient, s.config)
 	v1Group := s.router.Group("/api/v1")
 	{
 		v1API.RegisterRoutes(v1Group)

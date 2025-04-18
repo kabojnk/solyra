@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/kevinmahoney/etrenank/internal/photoquality"
 	"github.com/kevinmahoney/etrenank/internal/services/cache"
 	"github.com/kevinmahoney/etrenank/internal/services/weather"
+	"github.com/kevinmahoney/etrenank/internal/config"
 )
 
 // SunsetHandler handles sunset quality endpoints
@@ -19,14 +21,16 @@ type SunsetHandler struct {
 	db            *db.PostgresDB
 	redisClient   *cache.RedisClient
 	weatherClient *weather.Client
+	config        *config.Config
 }
 
 // NewSunsetHandler creates a new sunset handler
-func NewSunsetHandler(db *db.PostgresDB, redisClient *cache.RedisClient, weatherClient *weather.Client) *SunsetHandler {
+func NewSunsetHandler(db *db.PostgresDB, redisClient *cache.RedisClient, weatherClient *weather.Client, config *config.Config) *SunsetHandler {
 	return &SunsetHandler{
 		db:            db,
 		redisClient:   redisClient,
 		weatherClient: weatherClient,
+		config:        config,
 	}
 }
 
@@ -44,41 +48,61 @@ func (h *SunsetHandler) GetSunsetQuality(c *gin.Context) {
 
 	// Try to get from cache first
 	cacheKey := fmt.Sprintf("sunset_quality:%s", zipCode)
-	cachedData, err := h.redisClient.Get(ctx, cacheKey)
-	if err == nil {
-		// Cache hit
-		var sunsetQuality models.SunsetQuality
-		if err := json.Unmarshal([]byte(cachedData), &sunsetQuality); err == nil {
-			c.JSON(http.StatusOK, sunsetQuality)
-			return
+	
+	// Check if cache should be bypassed (only in debug mode)
+	noCache := h.config.Server.Debug && c.Query("nocache") == "true"
+	
+	if !noCache {
+		cachedData, err := h.redisClient.Get(ctx, cacheKey)
+		if err == nil {
+			// Cache hit
+			var sunsetQuality models.SunsetQuality
+			if err := json.Unmarshal([]byte(cachedData), &sunsetQuality); err == nil {
+				log.Printf("[INFO] Serving sunset quality from cache for zipcode: %s", zipCode)
+				c.JSON(http.StatusOK, sunsetQuality)
+				return
+			}
 		}
+		log.Printf("[INFO] Cache miss for zipcode: %s", zipCode)
+	} else {
+		log.Printf("[INFO] Cache bypass requested for zipcode: %s", zipCode)
 	}
 
-	// Cache miss, fetch from weather API
-	weatherData, astronomyData, err := h.weatherClient.GetWeatherByZipCode(zipCode)
+	// Get weather data from API
+	log.Printf("[INFO] Fetching fresh weather data from API for zipcode: %s", zipCode)
+	weatherDataList, astronomyDataList, err := h.weatherClient.GetWeatherByZipCode(zipCode)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to fetch weather data: %v", err),
+			"error": fmt.Sprintf("Failed to get weather data: %v", err),
 		})
 		return
 	}
 
-	// Calculate sunset quality
-	overallQuality, factors, interpretation := photoquality.CalculateSunriseQuality(*weatherData, *astronomyData)
-
-	// Create response
+	// Create response with forecasts for each day
 	now := time.Now()
 	expiresAt := now.Add(1 * time.Hour)
 
+	forecasts := make([]models.DayForecast, len(weatherDataList))
+	for i := range weatherDataList {
+		// Calculate quality score for each day
+		overallQuality, factors, interpretation := photoquality.CalculateSunriseQuality(*weatherDataList[i], *astronomyDataList[i])
+		
+		forecasts[i] = models.DayForecast{
+			Date:           weatherDataList[i].Date,
+			WeatherData:    *weatherDataList[i],
+			AstronomyData:  *astronomyDataList[i],
+			OverallQuality: overallQuality,
+			Factors:        factors,
+			Interpretation: interpretation,
+		}
+	}
+
 	sunsetQuality := models.SunsetQuality{
-		ZipCode:        zipCode,
-		OverallQuality: overallQuality,
-		Factors:        factors,
-		Interpretation: interpretation,
-		WeatherData:    *weatherData,
-		AstronomyData:  *astronomyData,
-		LastUpdated:    now.Format(time.RFC3339),
-		ExpiresAt:      expiresAt.Format(time.RFC3339),
+		ZipCode:     zipCode,
+		Location:    weatherDataList[0].Location,
+		Forecasts:   forecasts,
+		LastUpdated: now.Format(time.RFC3339),
+		ExpiresAt:   expiresAt.Format(time.RFC3339),
 	}
 
 	// Cache the result with 1 hour TTL
