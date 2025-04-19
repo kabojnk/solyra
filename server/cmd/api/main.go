@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/kevinmahoney/etrenank/internal/api"
-	"github.com/kevinmahoney/etrenank/internal/config"
-	"github.com/kevinmahoney/etrenank/internal/db"
-	"github.com/kevinmahoney/etrenank/internal/services/cache"
+	"github.com/kabojnk/solyra/server/internal/api"
+	"github.com/kabojnk/solyra/server/internal/config"
+	"github.com/kabojnk/solyra/server/internal/db"
+	"github.com/kabojnk/solyra/server/internal/services/cache"
 )
 
 func main() {

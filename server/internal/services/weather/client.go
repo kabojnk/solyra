@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kevinmahoney/etrenank/internal/models"
+	"github.com/kabojnk/solyra/server/internal/models"
 )
 
 // Client represents a weather API client
@@ -139,7 +139,7 @@ func (c *Client) GetWeatherByZipCode(zipCode string) ([]*models.WeatherData, []*
 				WindSpeed:            apiResp.Current.WindMph,
 				Temperature:          apiResp.Current.TempF,
 				Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
-				Date:                day.Date,
+				Date:                 day.Date,
 			}
 		} else {
 			// For future days, use forecast data
@@ -153,7 +153,7 @@ func (c *Client) GetWeatherByZipCode(zipCode string) ([]*models.WeatherData, []*
 				WindSpeed:            5.0,
 				Temperature:          70.0,
 				Location:             fmt.Sprintf("%s, %s", apiResp.Location.Name, apiResp.Location.Region),
-				Date:                day.Date,
+				Date:                 day.Date,
 			}
 		}
 

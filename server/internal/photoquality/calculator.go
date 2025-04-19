@@ -3,7 +3,7 @@ package photoquality
 import (
 	"math"
 
-	"github.com/kevinmahoney/etrenank/internal/models"
+	"github.com/kabojnk/solyra/server/internal/models"
 )
 
 // CalculateSunriseQuality evaluates the photographic quality of a sunrise/sunset

@@ -4,42 +4,43 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/kabojnk/solyra/server/internal/api/v1"
+	"github.com/kabojnk/solyra/server/internal/config"
+	"github.com/kabojnk/solyra/server/internal/db"
+	"github.com/kabojnk/solyra/server/internal/services/cache"
+	"github.com/kabojnk/solyra/server/internal/services/weather"
+
 	"github.com/gin-gonic/gin"
-	"github.com/kevinmahoney/etrenank/internal/api/v1"
-	"github.com/kevinmahoney/etrenank/internal/config"
-	"github.com/kevinmahoney/etrenank/internal/db"
-	"github.com/kevinmahoney/etrenank/internal/services/cache"
-	"github.com/kevinmahoney/etrenank/internal/services/weather"
 )
 
 // Server represents the API server
 type Server struct {
-	router      *gin.Engine
-	httpServer  *http.Server
-	db          *db.PostgresDB
-	redisClient *cache.RedisClient
+	router        *gin.Engine
+	httpServer    *http.Server
+	db            *db.PostgresDB
+	redisClient   *cache.RedisClient
 	weatherClient *weather.Client
-	config      *config.Config
+	config        *config.Config
 }
 
 // NewServer creates a new API server
 func NewServer(cfg *config.Config, database *db.PostgresDB, redisClient *cache.RedisClient) *Server {
 	router := gin.Default()
-	
+
 	// Create weather client
 	weatherClient := weather.NewClient(cfg.Weather.APIKey)
-	
+
 	server := &Server{
-		router:      router,
-		db:          database,
-		redisClient: redisClient,
+		router:        router,
+		db:            database,
+		redisClient:   redisClient,
 		weatherClient: weatherClient,
-		config:      cfg,
+		config:        cfg,
 	}
-	
+
 	// Setup routes
 	server.setupRoutes()
-	
+
 	return server
 }
 
@@ -51,7 +52,7 @@ func (s *Server) setupRoutes() {
 			"status": "ok",
 		})
 	})
-	
+
 	// API v1 routes
 	v1API := v1.NewAPI(s.db, s.redisClient, s.weatherClient, s.config)
 	v1Group := s.router.Group("/api/v1")
@@ -66,7 +67,7 @@ func (s *Server) Start() error {
 		Addr:    s.config.Server.Address,
 		Handler: s.router,
 	}
-	
+
 	return s.httpServer.ListenAndServe()
 }
 

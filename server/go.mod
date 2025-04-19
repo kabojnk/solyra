@@ -1,4 +1,4 @@
-module github.com/kevinmahoney/etrenank
+module github.com/kabojnk/solyra/server
 
 go 1.21
 

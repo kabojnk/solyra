@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kevinmahoney/etrenank/internal/config"
+	"github.com/kabojnk/solyra/server/internal/config"
 )
 
 // RedisClient represents a Redis client

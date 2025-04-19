@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kevinmahoney/etrenank/internal/db"
+	"github.com/kabojnk/solyra/server/internal/db"
 )
 
 // AuthMiddleware handles authentication
