@@ -10,38 +10,31 @@ services:
       - ./app/.env
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=https://api.${DOMAIN:-localhost}
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8081}
     expose:
-      - "5173"
+      - "${WEBAPP_PORT:-5173}:5173"
+    depends_on:
+      - api
     networks:
       - frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webapp.rule=Host(`${DOMAIN:-localhost}`)"
-      - "traefik.http.services.webapp.loadbalancer.server.port=5173"
+      - "traefik.http.services.webapp.loadbalancer.server.port=${WEBAPP_PORT:-5173}"
 
   api:
     build:
       context: ./server
       dockerfile: Dockerfile
     env_file:
-      - .env
       - ./server/.env
     expose:
-      - "8081"
+      - ${API_PORT:-8080}
+    ports:
+      - "${API_PORT:-8080}:8080"
     depends_on:
       - postgres
       - redis
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=${POSTGRES_USER:-postgres}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - DB_NAME=${POSTGRES_DB:-postgres}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - WEATHER_API_KEY=${WEATHER_API_KEY}
     networks:
       - backend
       - frontend
@@ -54,15 +47,12 @@ services:
   postgres:
     image: postgres:14-alpine
     env_file:
-      - .env
       - ./server/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - backend
     restart: unless-stopped
@@ -70,10 +60,11 @@ services:
   redis:
     image: redis:alpine
     env_file:
-      - .env
       - ./server/.env
     volumes:
-      - redis_data:/data
+      - redis_data:/data    
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - backend
     restart: unless-stopped

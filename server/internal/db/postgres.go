@@ -6,6 +6,7 @@ import (
 	"github.com/kabojnk/solyra/server/internal/config"
 	"github.com/kabojnk/solyra/server/internal/models"
 	_ "github.com/lib/pq"
+	"log"
 )
 
 // PostgresDB represents a PostgreSQL database connection
@@ -15,6 +16,10 @@ type PostgresDB struct {
 
 // NewPostgresDB creates a new PostgreSQL database connection
 func NewPostgresDB(cfg config.DatabaseConfig) (*PostgresDB, error) {
+
+	log.Printf("[INFO] Connection String: host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName)
+
 	connStr := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,

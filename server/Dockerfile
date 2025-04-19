@@ -23,7 +23,7 @@ COPY --from=builder /build/api .
 COPY .env /build/api
 
 # Expose port
-EXPOSE 8081
+EXPOSE 8080
 
 # Set environment variables
 ENV GIN_MODE=release

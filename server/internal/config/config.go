@@ -45,7 +45,7 @@ type WeatherConfig struct {
 func Load() (*Config, error) {
 	dbPort, err := strconv.Atoi(getEnv("POSTGRES_PORT", "5432"))
 	if err != nil {
-		return nil, fmt.Errorf("invalid DB_PORT: %v", err)
+		return nil, fmt.Errorf("invalid POSTGRES_PORT: %v", err)
 	}
 
 	redisPort, err := strconv.Atoi(getEnv("REDIS_PORT", "6379"))
