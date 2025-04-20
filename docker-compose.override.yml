@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  webapp:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "${WEBAPP_PORT:-5173}:5173"
+    networks:
+      - frontend
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+
+  api:    
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - backend
+      - frontend
+
+  postgres:    
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - backend
+
+  redis:    
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - backend
+  
+  traefik:
+    deploy:
+      replicas: 0
+
+volumes:
+  postgres_data:
+  redis_data:
+  letsencrypt:
+
+networks:
+  frontend:
+  backend:

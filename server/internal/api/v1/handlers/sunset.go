@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kevinmahoney/etrenank/internal/db"
-	"github.com/kevinmahoney/etrenank/internal/models"
-	"github.com/kevinmahoney/etrenank/internal/photoquality"
-	"github.com/kevinmahoney/etrenank/internal/services/cache"
-	"github.com/kevinmahoney/etrenank/internal/services/weather"
-	"github.com/kevinmahoney/etrenank/internal/config"
+	"github.com/kabojnk/solyra/server/internal/config"
+	"github.com/kabojnk/solyra/server/internal/db"
+	"github.com/kabojnk/solyra/server/internal/models"
+	"github.com/kabojnk/solyra/server/internal/photoquality"
+	"github.com/kabojnk/solyra/server/internal/services/cache"
+	"github.com/kabojnk/solyra/server/internal/services/weather"
 )
 
 // SunsetHandler handles sunset quality endpoints
@@ -48,10 +48,10 @@ func (h *SunsetHandler) GetSunsetQuality(c *gin.Context) {
 
 	// Try to get from cache first
 	cacheKey := fmt.Sprintf("sunset_quality:%s", zipCode)
-	
+
 	// Check if cache should be bypassed (only in debug mode)
 	noCache := h.config.Server.Debug && c.Query("nocache") == "true"
-	
+
 	if !noCache {
 		cachedData, err := h.redisClient.Get(ctx, cacheKey)
 		if err == nil {
@@ -86,7 +86,7 @@ func (h *SunsetHandler) GetSunsetQuality(c *gin.Context) {
 	for i := range weatherDataList {
 		// Calculate quality score for each day
 		overallQuality, factors, interpretation := photoquality.CalculateSunriseQuality(*weatherDataList[i], *astronomyDataList[i])
-		
+
 		forecasts[i] = models.DayForecast{
 			Date:           weatherDataList[i].Date,
 			WeatherData:    *weatherDataList[i],

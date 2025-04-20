@@ -1,30 +1,26 @@
 FROM golang:1.24-alpine AS builder
 
-# Install git and air for hot reloading
-RUN apk add --no-cache git && go install github.com/air-verse/air@latest
-
-WORKDIR /app
+WORKDIR /build
 
 # Copy go mod and sum files
-COPY cmd/api/go.mod cmd/api/go.sum ./cmd/api/
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy source code
-COPY .. .
+COPY . .
 
 # Build the application
-RUN go build -o /app/etrenank/api ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api/main.go
 
 FROM golang:1.24-alpine
 
-# Copy the binary from builder
-COPY --from=builder /app/etrenank/api .
-COPY --from=builder /go/bin/air /usr/local/bin/air
+WORKDIR /app
 
-# Copy air configuration
-COPY .air.toml .
+# Copy the binary and configs
+COPY --from=builder /build/api .
+COPY .env /build/api
 
 # Expose port
 EXPOSE 8080
@@ -33,4 +29,4 @@ EXPOSE 8080
 ENV GIN_MODE=release
 
 # Run with air for hot reloading in development
-CMD ["air", "-c", ".air.toml"]
+CMD ["./api"]
