@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 
-const STAR_COUNT = 90
-const STAR_MIN_SIZE = 1
-const STAR_MAX_SIZE = 2.5
-const STARFIELD_OPACITY = 0.45
+const STAR_COUNT = 390
+const STAR_MIN_SIZE = .3
+const STAR_MAX_SIZE = 1
+const STARFIELD_OPACITY = 0.8
 
 function randomBetween(min: number, max: number) {
   return Math.random() * (max - min) + min
@@ -36,6 +36,9 @@ export default function Starfield() {
     let stars = createStars(width, height)
 
     function draw() {
+      
+      if (!ctx) return
+      
       ctx.clearRect(0, 0, width, height)
       for (const star of stars) {
         const twinkle = 0.7 + 0.3 * Math.sin(Date.now() / 700 + star.twinkle * Math.PI * 2)
@@ -44,7 +47,7 @@ export default function Starfield() {
         ctx.arc(star.x, star.y, star.r, 0, 2 * Math.PI)
         ctx.fillStyle = '#fff'
         ctx.shadowColor = '#fff'
-        ctx.shadowBlur = 6
+        ctx.shadowBlur = randomBetween(1, 3)
         ctx.fill()
       }
       ctx.globalAlpha = 1
@@ -54,6 +57,8 @@ export default function Starfield() {
     draw()
 
     function handleResize() {
+      if (!canvas) return
+      
       width = window.innerWidth
       height = window.innerHeight
       canvas.width = width
