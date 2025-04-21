@@ -11,8 +11,11 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#a259ff", // purple
-          dark: "#6d28d9",
+          DEFAULT: "#6f42c1", // deep purple
+          dark: "#2d1a4d", // midnight purple
+        },
+        midnight: {
+          DEFAULT: "#191933", // deep midnight blue
         },
         magenta: {
           DEFAULT: "#ff3cac",
