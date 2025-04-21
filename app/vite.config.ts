@@ -27,29 +27,33 @@ export default defineConfig(({ command }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
-          name: 'Solyra',
+          name: 'Solyra Photo Toolbox',
           short_name: 'Solyra',
-          description: 'Solyra Weather App',
-          theme_color: '#ffffff',
+          description: 'A mobile-first PWA utility toolbox for photographers.',
+          theme_color: '#a259ff',
+          background_color: '#ffe156',
+          display: 'standalone',
+          orientation: 'portrait',
+          start_url: '/',
           icons: [
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any'
+              purpose: 'any',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'maskable'
-            }
-          ]
+              purpose: 'maskable',
+            },
+          ],
         },
         devOptions: {
           enabled: true
