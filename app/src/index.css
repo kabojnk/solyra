@@ -19,6 +19,25 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.sheen-bg {
+  position: relative;
+  overflow: hidden;
+}
+body.sheen-bg::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 70%);
+  transform: translateX(-60%) skewX(-10deg);
+  animation: sheen-move 8s linear infinite;
+}
+@keyframes sheen-move {
+  0% { transform: translateX(-60%) skewX(-10deg); }
+  100% { transform: translateX(120%) skewX(-10deg); }
+}
+
 body {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   background: linear-gradient(135deg, #a259ff 0%, #ff3cac 50%, #ffe156 100%);
