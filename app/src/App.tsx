@@ -1,4 +1,11 @@
+import React from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { useState } from 'react'
+import Composition from './pages/Composition.tsx'
+import Gear from './pages/Gear.tsx'
+import Hyperfocal from './pages/Hyperfocal.tsx'
+import NotFound from './pages/NotFound.tsx'
+import Weather from './pages/Weather.tsx'
 import { usePWA } from './hooks/usePWA'
 import './App.css'
 
@@ -6,30 +13,30 @@ const pills = [
   {
     label: "Hyperfocal",
     description: "Hyperfocal distance calculator",
-    href: "#hyperfocal",
+    to: "/hyperfocal",
     color: "bg-primary text-white",
   },
   {
     label: "My Cameras & Lenses",
     description: "Track your camera bodies and lenses",
-    href: "#gear",
+    to: "/gear",
     color: "bg-magenta text-white",
   },
   {
     label: "Weather Quality",
     description: "Check weather for photography",
-    href: "#weather",
+    to: "/weather",
     color: "bg-yellow text-gray-900",
   },
   {
     label: "Composition Check",
     description: "Grid & overlay tool for composition",
-    href: "#composition",
+    to: "/composition",
     color: "bg-primary-dark text-white",
   },
 ];
 
-function App() {
+function Home() {
   const [count, setCount] = useState(0)
   const { needRefresh, offlineReady } = usePWA()
 
@@ -40,22 +47,35 @@ function App() {
       </h1>
       <div className="w-full max-w-sm flex flex-col gap-6">
         {pills.map((pill) => (
-          <a
+          <Link
             key={pill.label}
-            href={pill.href}
+            to={pill.to}
             className={`glass flex flex-col items-start p-5 ${pill.color} rounded-pill transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-white/40`}
             style={{backdropFilter: 'blur(12px)'}}
           >
             <span className="text-lg font-semibold font-sans">{pill.label}</span>
             <span className="text-sm opacity-80 font-sans">{pill.description}</span>
-          </a>
+          </Link>
         ))}
       </div>
       <footer className="mt-10 text-xs text-white/70 font-sans">
         &copy; {new Date().getFullYear()} Solyra
       </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/hyperfocal" element={<Hyperfocal />} />
+        <Route path="/gear" element={<Gear />} />
+        <Route path="/weather" element={<Weather />} />
+        <Route path="/composition" element={<Composition />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
