@@ -1,43 +1,84 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import Composition from './pages/Composition.tsx'
+import Gear from './pages/Gear.tsx'
+import Hyperfocal from './pages/Hyperfocal.tsx'
+import NotFound from './pages/NotFound.tsx'
+import Weather from './pages/Weather.tsx'
+import Starfield from './Starfield'
 import { usePWA } from './hooks/usePWA'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 
-function App() {
+const pills = [
+  {
+    label: 'Hyperfocal',
+    description: 'Hyperfocal distance calculator',
+    to: '/hyperfocal',
+    color: 'bg-primary text-white',
+  },
+  {
+    label: 'My Cameras & Lenses',
+    description: 'Track your camera bodies and lenses',
+    to: '/gear',
+    color: 'bg-magenta text-white',
+  },
+  {
+    label: 'Weather Quality',
+    description: 'Check weather for photography',
+    to: '/weather',
+    color: 'bg-yellow text-gray-900',
+  },
+  {
+    label: 'Composition Check',
+    description: 'Grid & overlay tool for composition',
+    to: '/composition',
+    color: 'bg-primary-dark text-white',
+  },
+]
+
+function Home() {
   const [count, setCount] = useState(0)
   const { needRefresh, offlineReady } = usePWA()
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      {(needRefresh || offlineReady) && (
-        <div className="pwa-toast">
-          {offlineReady && <div>App ready to work offline</div>}
-          {needRefresh && <div>New content available, click to reload</div>}
+      <Starfield />
+      <div className="min-h-screen flex flex-col items-center justify-center px-2 py-6 bg-gradient-to-br from-midnight via-primary-dark to-primary">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-white drop-shadow-lg font-sans text-center">
+          Solyra Photo Toolbox
+        </h1>
+        <div className="w-full max-w-sm flex flex-col gap-6">
+          {pills.map((pill) => (
+            <Link
+              key={pill.label}
+              to={pill.to}
+              className={`neon-pill glass flex flex-col items-start p-5 rounded-pill transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-white/40`}
+              style={{ backdropFilter: 'blur(4px)' }}
+            >
+              <span className="text-lg font-semibold font-sans">{pill.label}</span>
+              <span className="text-sm opacity-80 font-sans">{pill.description}</span>
+            </Link>
+          ))}
         </div>
-      )}
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <footer className="mt-10 text-xs text-white/70 font-sans">
+          &copy; {new Date().getFullYear()} Solyra
+        </footer>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/hyperfocal" element={<Hyperfocal />} />
+        <Route path="/gear" element={<Gear />} />
+        <Route path="/weather" element={<Weather />} />
+        <Route path="/composition" element={<Composition />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
