@@ -4,36 +4,33 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     fontFamily: {
       sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
     },
     extend: {
       colors: {
+        background: {
+          DEFAULT: "#191933", // deep midnight blue
+          secondary: "#2d1a4d", // midnight purple
+        },
         primary: {
           DEFAULT: "#6f42c1", // deep purple
-          dark: "#2d1a4d", // midnight purple
+          accent: "#ff3cac", // magenta
+          highlight: "#ffe156", // yellow
         },
-        midnight: {
-          DEFAULT: "#191933", // deep midnight blue
+        primaryAccent: {
+          DEFAULT: "#ff3cac", // magenta
         },
-        magenta: {
-          DEFAULT: "#ff3cac",
-        },
-        yellow: {
-          DEFAULT: "#ffe156",
-        },
-        glass: {
-          DEFAULT: "rgba(255,255,255,0.15)",
+        surface: {
+          DEFAULT: "rgba(255,255,255,0.15)", // glass effect
         },
       },
       backdropBlur: {
         xs: '2px',
       },
-      borderRadius: {
-        pill: '9999px',
-      },
     },
   },
   plugins: [],
-};
+}
