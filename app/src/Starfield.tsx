@@ -50,9 +50,18 @@ export default function Starfield() {
         ctx.shadowBlur = randomBetween(1, 3)
         ctx.fill()
       }
+      
       ctx.globalAlpha = 1
       animationId = requestAnimationFrame(draw)
+      const gradient = ctx.createLinearGradient(0, height * 0.2, 0, height)
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0)')
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 1)')
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, height * 0.2, width, height * 0.8)
     }
+
+
 
     draw()
 

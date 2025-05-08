@@ -16,25 +16,21 @@ const pills = [
     label: 'Hyperfocal',
     description: 'Hyperfocal distance calculator',
     to: '/hyperfocal',
-    color: 'bg-background nightmode:bg-background-night',
   },
   {
     label: 'My Cameras & Lenses',
     description: 'Track your camera bodies and lenses',
     to: '/gear',
-    color: 'bg-background nightmode:bg-background-night',
   },
   {
     label: 'Weather Quality',
     description: 'Check weather for photography',
     to: '/weather',
-    color: 'bg-background nightmode:bg-background-night',
   },
   {
     label: 'Composition Check',
     description: 'Grid & overlay tool for composition',
     to: '/composition',
-    color: 'bg-background nightmode:bg-background-night',
   },
 ]
 
@@ -42,9 +38,12 @@ function Home() {
   const { needRefresh, offlineReady } = usePWA()
   const { nightMode } = usePreferences()
   return (
-      <div className="flex flex-col items-center justify-center min-h-screen w-screen bg-gradient-to-br from-background nightmode:from-background-night nightmode:via-background-secondary-night to-primary nightmode:to-primary-night">
+      <div className="flex flex-col items-center justify-center min-h-screen w-screen bg-gradient-to-br from-background nightmode:from-[#200] nightmode:via-background-secondary-night to-primary nightmode:to-[#300]">
         {!nightMode &&
-          <Starfield/>
+          <>
+            <Starfield/>
+            <div className="w-screen h-screen bg-[url(/bg-main.jpg)] bg-cover bg-center fixed opacity-50"/>
+          </>
         }
         <div className="min-h-screen flex flex-col items-center justify-center px-2 py-6">
           <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-content nightmode:text-content-night drop-shadow-lg font-sans text-center">
@@ -55,7 +54,7 @@ function Home() {
                 <Link
                     key={pill.to}
                     to={pill.to}
-                    className={`${pill.color} text-primary nightmode:text-primary-night rounded-full px-6 py-4 transition-all hover:scale-105`}
+                    className="bg-background/50 nightmode:bg-background-night/80 border-1 border-transparent nightmode:border-primary-night/30 text-content nightmode:text-primary-night rounded-full px-6 py-4 hover:scale-105 backdrop-blur-sm"
                 >
                   <h2 className="text-lg font-bold">{pill.label}</h2>
                   <p className="text-sm opacity-80">{pill.description}</p>
@@ -74,7 +73,7 @@ function App() {
   return (
       <BrowserRouter>
         <ThemeProvider>
-          <Routes>
+        <Routes>
             <Route path="/" element={<Home/>}/>
             <Route path="/hyperfocal" element={<Hyperfocal/>}/>
             <Route path="/gear" element={<Gear/>}/>
